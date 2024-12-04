@@ -1,11 +1,15 @@
 package com.fintechhub.crop.libraryUi
 
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -34,6 +38,7 @@ import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.geometry.toRect
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
@@ -63,25 +68,50 @@ fun CropperControls(
     modifier: Modifier = Modifier,
 ) {
     CompositionLocalProvider(LocalVerticalControls provides isVertical) {
-        ButtonsBar(modifier = modifier) {
+        ButtonsBar(modifier = modifier.fillMaxWidth()) {
             IconButton(onClick = { state.rotLeft() }) {
-                Icon(painterResource(R.drawable.rot_left), null)
+                Icon(
+                    painterResource(R.drawable.rot_left),
+                    null,
+                    modifier = Modifier.size(25.dp),
+                    tint = Color.Black
+                )
             }
             IconButton(onClick = { state.rotRight() }) {
-                Icon(painterResource(R.drawable.rot_right), null)
+                Icon(
+                    painterResource(R.drawable.rot_right),
+                    null,
+                    modifier = Modifier.size(25.dp),
+                    tint = Color.Black
+                )
             }
             IconButton(onClick = { state.flipHorizontal() }) {
-                Icon(painterResource(R.drawable.flip_hor), null)
+                Icon(
+                    painterResource(R.drawable.flip_hor),
+                    null,
+                    modifier = Modifier.size(25.dp),
+                    tint = Color.Black
+                )
             }
             IconButton(onClick = { state.flipVertical() }) {
-                Icon(painterResource(R.drawable.flip_ver), null)
+                Icon(
+                    painterResource(R.drawable.flip_ver),
+                    null,
+                    modifier = Modifier.size(25.dp),
+                    tint = Color.Black
+                )
             }
             LocalCropperStyle.current.aspects.let { aspects ->
                 if (aspects.size > 1) {
                     Box {
                         var menu by remember { mutableStateOf(false) }
                         IconButton(onClick = { menu = !menu }) {
-                            Icon(painterResource(R.drawable.resize), null)
+                            Icon(
+                                painterResource(R.drawable.resize),
+                                null,
+                                modifier = Modifier.size(25.dp),
+                                tint = Color.Black
+                            )
                         }
                         if (menu) AspectSelectionMenu(
                             onDismiss = { menu = false },
@@ -98,7 +128,12 @@ fun CropperControls(
                     Box {
                         var menu by remember { mutableStateOf(false) }
                         IconButton(onClick = { menu = !menu }) {
-                            Icon(Icons.Default.Star, null)
+                            Icon(
+                                Icons.Default.Star,
+                                null,
+                                modifier = Modifier.size(25.dp),
+                                tint = Color.Black
+                            )
                         }
                         if (menu) ShapeSelectionMenu(
                             onDismiss = { menu = false },
@@ -120,19 +155,22 @@ fun ButtonsBar(
 ) {
     Surface(
         modifier = modifier,
-        shape = CircleShape,
         shadowElevation = 4.dp,
-        color = MaterialTheme.colorScheme.surface.copy(alpha = .8f),
+        color = Color.White,
         contentColor = contentColorFor(MaterialTheme.colorScheme.surface)
     ) {
         if (LocalVerticalControls.current) Column(
-            modifier = Modifier.verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterVertically)
+            modifier = Modifier
+                .verticalScroll(rememberScrollState())
+                .padding(top = 12.dp, bottom = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterVertically)
         ) {
             buttons()
         } else Row(
-            modifier = Modifier.horizontalScroll(rememberScrollState()),
-            horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally)
+            modifier = Modifier
+                .horizontalScroll(rememberScrollState())
+                .padding(top = 12.dp, bottom = 12.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally)
         ) {
             buttons()
         }
