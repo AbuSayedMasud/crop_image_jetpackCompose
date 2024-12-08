@@ -1,4 +1,5 @@
 package com.fintechhub.crop.ui.t
+
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Button
@@ -34,10 +35,11 @@ fun DemoContent(
         modifier = modifier.padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        if (selectedImage != null) Image(
-            bitmap = selectedImage, contentDescription = null,
-            modifier = Modifier.weight(1f)
-        ) else Box(contentAlignment = Alignment.Center, modifier = Modifier.weight(1f)) {
+        if (selectedImage != null)
+            Image(
+                bitmap = selectedImage, contentDescription = null,
+                modifier = Modifier.weight(1f)
+            ) else Box(contentAlignment = Alignment.Center, modifier = Modifier.weight(1f)) {
             Text("No image selected !")
         }
         Button(onClick = onPick) { Text("Choose Image") }

@@ -102,7 +102,6 @@ fun ImageCropperDialog(
 fun BoxScope.DefaultControls(state: CropState) {
     val verticalControls =
         LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
-
     CropperControls(
         isVertical = verticalControls,
         state = state,

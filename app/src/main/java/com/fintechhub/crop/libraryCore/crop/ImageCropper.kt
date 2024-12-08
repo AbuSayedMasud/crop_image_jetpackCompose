@@ -32,7 +32,7 @@ enum class CropperLoading {
     SavingResult,
 }
 
-val DefaultMaxCropSize = IntSize(3000, 3000)
+val DefaultMaxCropSize = IntSize(2000, 2000)
 
 /**
  * State holder for the image cropper.
@@ -72,7 +72,7 @@ suspend fun ImageCropper.crop(
 
 suspend fun ImageCropper.cropSrc(
     imageSrc: ImageSrc?,
-    maxResultSize: IntSize? = DefaultMaxCropSize
+    maxResultSize: IntSize? = null // Pass null to preserve resolution
 ): CropResult = crop(maxResultSize = maxResultSize) {
     imageSrc
 }

@@ -16,6 +16,7 @@ class ImagesViewModel : ViewModel() {
     val imageCropper = imageCropper()
     private val _selectedImage = MutableStateFlow<ImageBitmap?>(null)
     val selectedImage = _selectedImage.asStateFlow()
+
     private val _cropError = MutableStateFlow<CropError?>(null)
     val cropError = _cropError.asStateFlow()
 

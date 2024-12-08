@@ -1,4 +1,4 @@
-package com.attafitamim.krop.ui
+package com.fintechhub.crop.libraryUi
 
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Rect
