@@ -22,13 +22,16 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toIntRect
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import coil.compose.rememberAsyncImagePainter
 import coil.compose.rememberImagePainter
+import com.fintechhub.crop.CameraPreviewScreen
 import com.fintechhub.crop.libraryCore.images.DecodeParams
 import com.fintechhub.crop.libraryCore.images.DecodeResult
 import com.fintechhub.crop.libraryCore.images.ImageSrc
@@ -41,96 +44,95 @@ import java.util.*
 @Composable
 fun ViewModelDemo(viewModel: ImagesViewModel, modifier: Modifier = Modifier) {
     val context = LocalContext.current
+    var hasCameraPermission by remember {
+        mutableStateOf(
+            ContextCompat.checkSelfPermission(
+                context,
+                android.Manifest.permission.CAMERA
+            ) == PackageManager.PERMISSION_GRANTED
+        )
+    }
     var capturedImageUri by remember { mutableStateOf<Uri?>(null) }
+    var isCameraPreviewVisible by remember { mutableStateOf(false) }
+    var showDialog by remember { mutableStateOf(false) }
 
-    // Create URI for storing the image
-    val imageUri = createImageUri(context)
-
-    // Camera intent launcher
-    val cameraLauncher =
-        rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { isSuccess ->
-            if (isSuccess) {
-                capturedImageUri = imageUri
-                Log.d("image url",capturedImageUri.toString())
-                val image = UriImageSrc(capturedImageUri!!, context)
-                viewModel.setSelectedImage(image)
-
-            } else {
-                Toast.makeText(context, "Failed to capture image", Toast.LENGTH_SHORT).show()
-            }
-        }
-
-    fun requestPermissions(context: Context, permissionLauncher: ManagedActivityResultLauncher<Array<String>, Map<String, Boolean>>) {
-        val permissions = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
-            arrayOf(
-                Manifest.permission.CAMERA,
-                Manifest.permission.READ_MEDIA_IMAGES
-            )
-        } else {
-            arrayOf(
-                Manifest.permission.CAMERA,
-                Manifest.permission.READ_EXTERNAL_STORAGE
-            )
-        }
-        // Check if permissions are already granted
-        if (permissions.all { ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED }) {
-            // Launch camera or gallery as permissions are granted
-            permissionLauncher.launch(permissions)
-        } else {
-            // Request permissions
-            permissionLauncher.launch(permissions)
+    val cameraPermissionRequest = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        hasCameraPermission = isGranted
+        if (isGranted) {
+            isCameraPreviewVisible = true
         }
     }
 
-    // Permission launcher for camera and storage
-    val permissionLauncher =
-        rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
-            val isCameraGranted = permissions[Manifest.permission.CAMERA] ?: false
-            val isMediaGranted =
-                permissions[Manifest.permission.READ_MEDIA_IMAGES] ?: false || // For Android 13+
-                        permissions[Manifest.permission.READ_EXTERNAL_STORAGE] ?: false // For pre-Android 13
-
-            if (isCameraGranted && isMediaGranted) {
-                cameraLauncher.launch(imageUri)
-            } else {
-                Toast.makeText(context, "Permission denied", Toast.LENGTH_SHORT).show()
-            }
-        }
-
-
-    // Image picker to choose an image from the gallery
     val imagePicker = rememberImagePicker(onImage = { imageSrc ->
         viewModel.setSelectedImage(imageSrc)
     })
 
-    // State to manage the visibility of the dialog
-    var showDialog by remember { mutableStateOf(false) }
-
-    Column(modifier = Modifier.fillMaxSize()) {
-        DemoContent(
-            cropState = viewModel.imageCropper.cropState,
-            loadingStatus = viewModel.imageCropper.loadingStatus,
-            selectedImage = viewModel.selectedImage.collectAsState().value,
-            onPick = { showDialog = true },
-            modifier = modifier
-        )
-    }
-
-    // Show Camera/Gallery selection dialog
     if (showDialog) {
-        CameraGalleryDialog(
-            onCameraClick = {
-                requestPermissions(context, permissionLauncher)
-                showDialog = false
+        // Dialog for choosing camera or gallery
+        AlertDialog(
+            onDismissRequest = { showDialog = false },
+            title = { Text(text = "Select Option") },
+            text = { Text("Choose to take a picture from camera or select from gallery.") },
+            confirmButton = {
+                Button(onClick = {
+                    if (hasCameraPermission) {
+                        isCameraPreviewVisible = true
+                        showDialog = false
+                    } else {
+                        cameraPermissionRequest.launch(android.Manifest.permission.CAMERA)
+                    }
+                }) {
+                    Text(text = "Take Picture")
+                }
             },
-            onGalleryClick = {
-                imagePicker.pick()
-                showDialog = false
-            },
-            onDismiss = { showDialog = false }
+            dismissButton = {
+                Button(onClick = {
+                    imagePicker.pick()
+                }) {
+                    Text(text = "Choose from Gallery")
+                }
+            }
         )
     }
+    // Main UI
+    Column(
+        modifier = Modifier
+            .fillMaxSize(),
+        verticalArrangement = Arrangement.Center
+    ) {
+        // Main UI with DemoContent and CropErrorDialog
+        Column(modifier = Modifier.fillMaxSize()) {
+            DemoContent(
+                cropState = viewModel.imageCropper.cropState,
+                loadingStatus = viewModel.imageCropper.loadingStatus,
+                selectedImage = viewModel.selectedImage.collectAsState().value,
+                onPick = {
+                    showDialog = true // Show the dialog to pick an image
+                },
+                modifier = modifier
+            )
+            viewModel.cropError.collectAsState().value?.let { error ->
+                CropErrorDialog(error, onDismiss = { viewModel.cropErrorShown() })
+            }
+        }
+    }
+    // Display Camera Preview if no image captured
+    if (isCameraPreviewVisible) {
+        CameraPreviewScreen { uri ->
+            capturedImageUri = uri
+            val image = capturedImageUri?.let { UriImageSrc(it, context) }
+            if (image != null) {
+                viewModel.setSelectedImage(image)
+            }
+            isCameraPreviewVisible = false // Hide camera preview after image capture
+        }
+    }
+
 }
+
+
 
 fun createImageUri(context: Context): Uri {
     val contentValues = ContentValues().apply {
